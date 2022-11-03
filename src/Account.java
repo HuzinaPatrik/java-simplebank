@@ -6,12 +6,12 @@ public class Account {
     static HashMap<Integer, String> accountNameFromID = new HashMap<Integer, String>();
     static HashMap<String, Integer> accountIDFromName = new HashMap<String, Integer>();
 
-    Integer id;
-    String name;
-    String password;
-    boolean needToRemoved = false;
-    Integer balance;
-    Integer oldBalance = balance;
+    private final Integer id;
+    private String name;
+    private String password;
+    private boolean needToRemoved = false;
+    private Integer balance;
+    private Integer oldBalance = balance;
 
     public Account(String name, String password, Integer balance) {
         this.id = accounts.size();
@@ -78,11 +78,61 @@ public class Account {
 
     void setBalance(Integer balance) {
         this.oldBalance = this.balance;
+
         this.balance = balance;
+    }
+
+    boolean takeBalance(Integer amount) {
+        int balance = getBalance();
+        int newBalance = balance - amount;
+
+        if (hasBalance(newBalance)) {
+            setBalance(newBalance);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    void giveBalance(Integer amount) {
+        int balance = getBalance();
+        int newBalance = balance + amount;
+
+        setBalance(newBalance);
     }
 
     Integer getBalance() {
         return this.balance;
+    }
+
+    boolean hasBalance(Integer amount) {
+        return this.balance >= amount;
+    }
+
+    boolean transferMoney(String target, Integer amount) {
+        Account targetAccount = Account.getAccountByName(target);
+
+        if (targetAccount == null) {
+            try {
+                int id = Integer.parseInt(target);
+
+                targetAccount = Account.getAccountByID(id);
+            } catch (NumberFormatException ignored) {
+
+            }
+        }
+
+        if (targetAccount != null) {
+            if (hasBalance(amount)) {
+                takeBalance(amount);
+                targetAccount.giveBalance(amount);
+
+                return true;
+            }
+        }
+
+        return false;
     }
 
     Boolean isValid() {
