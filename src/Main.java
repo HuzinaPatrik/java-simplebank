@@ -1,123 +1,146 @@
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class Main {
-    public static void loginAccount() {
-        System.out.println("=======================================");
-        System.out.println("Please enter your bank username:");
-        Scanner sc = new Scanner(System.in);
+    public static void requestFunctions(Account account, Scanner sc, Boolean ignoreWelcomeText) {
+        if (account.isValid()) {
+            System.out.println("=======================================");
+            if (!ignoreWelcomeText) {
+                System.out.println("Welcome, " + account.getName() + "!");
+            }
+            System.out.println("Use 'B' for getting your Balance");
+            System.out.println("Use 'C' for changing your Balance");
+            System.out.println("Use 'P' for changing your Password");
+            System.out.println("Use 'T' for transfer money to other Account");
+            System.out.println("Use 'D' to deactivate your Account");
+            System.out.println("Use 'L' to logout from your Account\n");
+            System.out.println("Press enter the task ID below: ");
+            System.out.println("=======================================");
 
-        String username = sc.nextLine();
-        Account account = Account.getAccountByName(username);
-        if (account != null) {
-            System.out.println("Please enter your bank password:");
-            String password = sc.nextLine();
+            char c = sc.next().charAt(0);
 
-            if (account.getPassword().equals(password)) {
-                if (account.isValid()) {
-                    System.out.println("Welcome, " + account.getName() + "!");
-                    System.out.println("Use 'B' for getting your Balance");
-                    System.out.println("Use 'C' for changing your Balance");
-                    System.out.println("Use 'P' for changing your Password");
-                    System.out.println("Use 'T' for transfer money to other Account");
-                    System.out.println("Use 'D' to deactivate your Account");
-                    System.out.println("Use 'L' to logout from your Account\n");
-                    System.out.println("Press enter the task ID below: ");
+            switch (c) {
+                case 'B':
+                    System.out.println("Your balance is: " + account.getBalance());
+                    break;
+                case 'C':
+                    System.out.println("Please enter below the new amount:");
 
-                    char c = sc.next().charAt(0);
+                    if (sc.hasNextInt()) {
+                        int amount = sc.nextInt();
 
-                    switch (c) {
-                        case 'B':
-                            System.out.println("Your balance is: " + account.getBalance());
-                            break;
-                        case 'C':
-                            System.out.println("Please enter below the new amount:");
+                        account.setBalance(amount);
 
-                            if (sc.hasNextInt()) {
-                                int amount = sc.nextInt();
+                        System.out.println("Your new balance is: " + amount);
+                    }
 
-                                account.setBalance(amount);
+                    break;
+                case 'P':
+                    System.out.println("Please enter below the new password:");
 
-                                System.out.println("Your new balance is: " + amount);
-                            }
+                    sc.nextLine(); //Hotfix cuz sc.nextInt (https://www.educative.io/answers/what-is-scannernextline-in-java)
 
-                            break;
-                        case 'P':
-                            System.out.println("Please enter below the new password:");
+                    if (sc.hasNextLine()) {
+                        String newPassword = sc.nextLine();
+
+                        account.setPassword(newPassword);
+
+                        String starPassword = newPassword.replaceAll(".", "*");
+
+                        System.out.println("Your password changed to: " + starPassword + ", you need to relogin into your account!");
+
+                        loginAccount(sc, true);
+
+                        return;
+                    }
+
+                    break;
+                case 'T':
+                    System.out.println("Please enter below the amount:");
+
+                    if (sc.hasNextInt()) {
+                        int amount = sc.nextInt();
+
+                        if (account.hasBalance(amount)) {
+                            System.out.println("Please enter below the accountName/ID of who you wanna transfer to:");
 
                             sc.nextLine(); //Hotfix cuz sc.nextInt (https://www.educative.io/answers/what-is-scannernextline-in-java)
 
                             if (sc.hasNextLine()) {
-                                String newPassword = sc.nextLine();
+                                String targetDetails = sc.nextLine();
 
-                                account.setPassword(newPassword);
+                                if (account.transferMoney(targetDetails, amount)) {
+                                    System.out.println("Successfully transferred " + amount + " money to: " + targetDetails + "!");
 
-                                String starPassword = newPassword.replaceAll(".", "*");
-
-                                System.out.println("Your password changed to: " + starPassword + ", you need to relogin into your account!");
-
-                                loginAccount();
-                            }
-
-                            break;
-                        case 'T':
-                            System.out.println("Please enter below the amount:");
-
-                            if (sc.hasNextInt()) {
-                                int amount = sc.nextInt();
-
-                                if (account.hasBalance(amount)) {
-                                    System.out.println("Please enter below the accountName/ID of who you wanna transfer to:");
-
-                                    sc.nextLine(); //Hotfix cuz sc.nextInt (https://www.educative.io/answers/what-is-scannernextline-in-java)
-
-                                    if (sc.hasNextLine()) {
-                                        String targetDetails = sc.nextLine();
-
-                                        if (account.transferMoney(targetDetails, amount)) {
-                                            System.out.println("Successfully transferred " + amount + " money to: " + targetDetails + "!");
-
-                                            System.out.println("Your new balance is: " + account.getBalance());
-                                        } else {
-                                            System.out.println("Sorry but we couldn't find: " + targetDetails + "!");
-                                        }
-                                    }
+                                    System.out.println("Your new balance is: " + account.getBalance());
                                 } else {
-                                    System.out.println("You don't have enough money for that.");
+                                    System.out.println("Sorry but we couldn't find: " + targetDetails + "! (Or this account could be deactivated!)");
                                 }
                             }
-
-                            break;
-                        case 'D':
-                            account.remove();
-
-                            System.out.println("Your account successfully deactivated!");
-
-                            loginAccount();
-
-                            break;
-                        case 'L':
-                            System.out.println("You successfully logged out!");
-
-                            loginAccount();
-                            break;
+                        } else {
+                            System.out.println("You don't have enough money for that.");
+                        }
                     }
+                    break;
+                case 'D':
+                    account.remove();
 
-                    sc.close();
-                } else {
-                    System.out.println("Sorry but this account is deactivated!");
+                    System.out.println("Your account successfully deactivated!");
 
-                    loginAccount();
+                    loginAccount(sc, true);
+
+                    return;
+                case 'L':
+                    System.out.println("You successfully logged out!");
+
+                    loginAccount(sc, true);
+                    return;
+            }
+
+            new Timer().schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    requestFunctions(account, sc, true);
+                }
+            }, 2500L);
+        } else {
+            System.out.println("Sorry but this account is deactivated!");
+
+            loginAccount(sc, true);
+        }
+    }
+
+    public static void loginAccount(Scanner sc, Boolean refreshNextLine) {
+        System.out.println("=======================================");
+        System.out.println("Please enter your bank username:");
+
+        if (refreshNextLine) {
+            sc.nextLine(); //Hotfix cuz sc.nextInt (https://www.educative.io/answers/what-is-scannernextline-in-java)
+        }
+
+        if (sc.hasNextLine()) {
+            String username = sc.nextLine();
+            Account account = Account.getAccountByName(username);
+            if (account != null) {
+                System.out.println("Please enter your bank password:");
+                if (sc.hasNextLine()) {
+                    String password = sc.nextLine();
+
+                    if (account.getPassword().equals(password)) {
+                        requestFunctions(account, sc, false);
+                    } else {
+                        System.out.println("Sorry but you entered wrong password!");
+
+                        loginAccount(sc, false);
+                    }
                 }
             } else {
-                System.out.println("Sorry but you entered wrong password!");
+                System.out.println("Account " + username + " doesn't exist in our database!");
 
-                loginAccount();
+                loginAccount(sc, false);
             }
-        } else {
-            System.out.println("Account " + username + " doesn't exist in our database!");
-
-            loginAccount();
         }
     }
 
@@ -131,8 +154,9 @@ public class Main {
         System.out.println(accounts.get(2).isValid());
         System.out.println(accounts.get(2).getBalance());
         System.out.println(Account.getAccountByName("Teszt2").getBalance());
-        System.out.println(Account.getAccountByID(0).getBalance());
+        System.out.println(Account.getAccountByID(2).getBalance());
+        System.out.println(Account.getBiggestAccountID());
 
-        loginAccount();
+        loginAccount(new Scanner(System.in), false);
     }
 }

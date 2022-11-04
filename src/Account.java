@@ -2,6 +2,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Account {
+    static Integer registeredAccounts = -1; //I'm using this instead of accounts.size(); cuz the garbagecollector will delete the null value from the list and from that point the list length will say 2 while our highest index is 3; (Example)
     static ArrayList<Account> accounts = new ArrayList<Account>();
     static HashMap<Integer, String> accountNameFromID = new HashMap<Integer, String>();
     static HashMap<String, Integer> accountIDFromName = new HashMap<String, Integer>();
@@ -14,7 +15,7 @@ public class Account {
     private Integer oldBalance = balance;
 
     public Account(String name, String password, Integer balance) {
-        this.id = accounts.size();
+        this.id = ++registeredAccounts;
         this.name = name;
         this.password = password;
         this.balance = balance;
@@ -25,11 +26,17 @@ public class Account {
     }
 
     void remove() {
+        accounts.set(this.id, null);
+
         this.needToRemoved = true;
     }
 
     static public ArrayList<Account> getAccounts() {
         return accounts;
+    }
+
+    static public Integer getBiggestAccountID() {
+        return registeredAccounts;
     }
 
     static public String getAccountNameByID(Integer id) {
@@ -41,7 +48,7 @@ public class Account {
     }
 
     static public Account getAccountByID(Integer id) {
-        if (id >= 0)
+        if (id >= 0 && id <= accounts.size())
             return accounts.get(id);
 
         return null;
@@ -50,7 +57,7 @@ public class Account {
     static public Account getAccountByName(String name) {
         Integer id = Account.getAccountIDByName(name);
 
-        if (id >= 0)
+        if (id >= 0 && id <= accounts.size())
             return accounts.get(id);
 
         return null;
@@ -125,10 +132,12 @@ public class Account {
 
         if (targetAccount != null) {
             if (hasBalance(amount)) {
-                takeBalance(amount);
-                targetAccount.giveBalance(amount);
+                if (targetAccount.isValid()) {
+                    takeBalance(amount);
+                    targetAccount.giveBalance(amount);
 
-                return true;
+                    return true;
+                }
             }
         }
 
