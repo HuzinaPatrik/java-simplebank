@@ -8,18 +8,23 @@ public class Main {
         if (account.isValid()) {
             System.out.println("=======================================");
             if (!ignoreWelcomeText) {
+                System.out.println("Successfully logged in to Bank: " + account.getAccountBank().getBankName());
                 System.out.println("Welcome, " + account.getName() + "!");
             }
+
             System.out.println("Use 'B' for getting your Balance");
             System.out.println("Use 'C' for changing your Balance");
+            System.out.println("Use 'G' to get money from your Balance");
             System.out.println("Use 'P' for changing your Password");
             System.out.println("Use 'T' for transfer money to other Account");
+            System.out.println("Use 'L' to logout from your Account");
+            System.out.println("Use 'N' to get your bank details");
             System.out.println("Use 'D' to deactivate your Account");
-            System.out.println("Use 'L' to logout from your Account\n");
+            System.out.println("Use 'L' to logout from your Account");
             System.out.println("Press enter the task ID below: ");
             System.out.println("=======================================");
 
-            char c = sc.next().charAt(0);
+            char c = sc.next().toUpperCase().charAt(0);
 
             switch (c) {
                 case 'B':
@@ -28,12 +33,27 @@ public class Main {
                 case 'C':
                     System.out.println("Please enter below the new amount:");
 
-                    if (sc.hasNextInt()) {
-                        int amount = sc.nextInt();
+                    if (sc.hasNextDouble()) {
+                        double amount = sc.nextDouble();
 
                         account.setBalance(amount);
 
                         System.out.println("Your new balance is: " + amount);
+                    }
+
+                    break;
+                case 'G':
+                    System.out.println("Please enter below the amount:");
+
+                    if (sc.hasNextDouble()) {
+                        double amount = sc.nextDouble();
+                        System.out.println(amount);
+
+                        if (account.takeBalance(amount)) {
+                            System.out.println("Your new balance is: " + account.getBalance());
+                        } else {
+                            System.out.println("Something went wrong, contact your bank to get the details!");
+                        }
                     }
 
                     break;
@@ -60,8 +80,8 @@ public class Main {
                 case 'T':
                     System.out.println("Please enter below the amount:");
 
-                    if (sc.hasNextInt()) {
-                        int amount = sc.nextInt();
+                    if (sc.hasNextDouble()) {
+                        double amount = sc.nextDouble();
 
                         if (account.hasBalance(amount)) {
                             System.out.println("Please enter below the accountName/ID of who you wanna transfer to:");
@@ -92,6 +112,16 @@ public class Main {
                     loginAccount(sc, true);
 
                     return;
+                case 'N':
+                    System.out.println("=======================================");
+                    System.out.println("Bank name: " + account.getAccountBank().getBankName());
+                    System.out.println("Bank owner: " + account.getAccountBank().getBankOwner());
+                    System.out.println("Bank money: " + account.getAccountBank().getGlobalMoney());
+                    System.out.println("Bank interest rate: " + account.getAccountBank().getInterestRate());
+                    System.out.println("Bank charge rate: " + account.getAccountBank().getChargeRate());
+                    System.out.println("=======================================");
+
+                    break;
                 case 'L':
                     System.out.println("You successfully logged out!");
 
@@ -145,9 +175,10 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        Account newAccount = new Account("Teszt", "Teszt123", 5);
-        Account newAccount2 = new Account("Teszt2", "Teszt123", 500);
-        Account newAccount3 = new Account("Teszt3", "Teszt123", 0);
+        Bank bank = new Bank("Teszt1", "HP", 250000.0, new ArrayList<Account>(), 0.25, 0.75);
+        Account newAccount = new Account("Teszt", "Teszt123", 5.0, bank);
+        Account newAccount2 = new Account("Teszt2", "Teszt123", 500.0, bank);
+        Account newAccount3 = new Account("Teszt3", "Teszt123", 0.0, bank);
 
         ArrayList<Account> accounts = Account.getAccounts();
 

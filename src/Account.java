@@ -11,14 +11,17 @@ public class Account {
     private String name;
     private String password;
     private boolean needToRemoved = false;
-    private Integer balance;
-    private Integer oldBalance = balance;
+    private Double balance;
+    private Double oldBalance = balance;
 
-    public Account(String name, String password, Integer balance) {
+    private Bank bank;
+
+    public Account(String name, String password, Double balance, Bank bank) {
         this.id = ++registeredAccounts;
         this.name = name;
         this.password = password;
         this.balance = balance;
+        this.bank = bank;
 
         accounts.add(this);
         accountNameFromID.put(this.id, name);
@@ -83,41 +86,44 @@ public class Account {
         return this.id;
     }
 
-    void setBalance(Integer balance) {
+    void setBalance(Double balance) {
         this.oldBalance = this.balance;
 
         this.balance = balance;
     }
 
-    boolean takeBalance(Integer amount) {
-        int balance = getBalance();
-        int newBalance = balance - amount;
+    boolean takeBalance(Double amount) {
+        double balance = getBalance();
+        double newBalance = balance - amount;
 
-        if (hasBalance(newBalance)) {
-            setBalance(newBalance);
+        if (this.getAccountBank().hasGlobalMoney(amount)) {
+            if (hasBalance(amount)) {
+                this.getAccountBank().takeGlobalMoney(amount);
+                setBalance(newBalance);
 
-            return true;
+                return true;
+            }
         }
 
         return false;
     }
 
-    void giveBalance(Integer amount) {
-        int balance = getBalance();
-        int newBalance = balance + amount;
+    void giveBalance(Double amount) {
+        double balance = getBalance();
+        double newBalance = balance + amount;
 
         setBalance(newBalance);
     }
 
-    Integer getBalance() {
+    Double getBalance() {
         return this.balance;
     }
 
-    boolean hasBalance(Integer amount) {
+    boolean hasBalance(Double amount) {
         return this.balance >= amount;
     }
 
-    boolean transferMoney(String target, Integer amount) {
+    boolean transferMoney(String target, Double amount) {
         Account targetAccount = Account.getAccountByName(target);
 
         if (targetAccount == null) {
@@ -131,12 +137,17 @@ public class Account {
         }
 
         if (targetAccount != null) {
-            if (hasBalance(amount)) {
-                if (targetAccount.isValid()) {
-                    takeBalance(amount);
-                    targetAccount.giveBalance(amount);
+            if (targetAccount.getAccountBank().equals(this.getAccountBank())) {
+                if (hasBalance(amount)) {
+                    if (this.getAccountBank().hasGlobalMoney(amount)) {
+                        if (targetAccount.isValid()) {
+                            this.getAccountBank().takeGlobalMoney(amount);
+                            takeBalance(amount);
+                            targetAccount.giveBalance(amount);
 
-                    return true;
+                            return true;
+                        }
+                    }
                 }
             }
         }
@@ -146,5 +157,13 @@ public class Account {
 
     Boolean isValid() {
         return !this.needToRemoved;
+    }
+
+    public Bank getAccountBank() {
+        return this.bank;
+    }
+
+    public void setAccountBank(Bank bank) {
+        this.bank = bank;
     }
 }
